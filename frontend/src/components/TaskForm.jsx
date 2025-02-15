@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { createTask, updateTask } from '../api';
+import useTaskStore from '../store/useTaskStore';
 
-const TaskForm = ({ currentTask, onFinish }) => {
+const TaskForm = () => {
+    const { currentTask, addTask, updateTask, clearCurrentTask } = useTaskStore();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
     useEffect(() => {
-        if (currentTask) { 
+        if (currentTask) {
             setName(currentTask.name);
             setDescription(currentTask.description);
         }
@@ -14,25 +15,14 @@ const TaskForm = ({ currentTask, onFinish }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            if (currentTask) {
-                await updateTask(currentTask._id, { name, description });
-                onFinish(true, 'actualizada');
-            } else {
-                await createTask({ name, description });
-                onFinish(true, 'creada');
-            }
-        } catch (error) {
-            onFinish(false, currentTask ? 'actualizar' : 'crear');
+        if (currentTask) {
+            await updateTask(currentTask._id, { name, description });
+        } else {
+            await addTask({ name, description });
         }
         setName('');
         setDescription('');
-    };
-    
-    const resetForm = () => {
-        setName('');
-        setDescription('');
-        onFinish(); // Notifica al componente padre para que salga del modo "editar"
+        clearCurrentTask();
     };
 
     return (
@@ -52,7 +42,6 @@ const TaskForm = ({ currentTask, onFinish }) => {
             </div>
             <div className="flex pl-5">
                 <textarea
-                    type="text"
                     value={description}
                     className="rounded-sm text-xl pl-2 pt-1 pb-1 pr-6 outline-none"
                     onChange={(e) => setDescription(e.target.value)}
@@ -61,18 +50,11 @@ const TaskForm = ({ currentTask, onFinish }) => {
                 />
             </div>
             <div className="flex pl-5 mt-5 mb-5">
-                <button
-                    className="mb-5 pl-4 pr-4 pt-1 pb-1 text-xl border border-blue-500 rounded bg-blue-500 text-white font-bold"
-                    type="submit"
-                >
+                <button className="mb-5 pl-4 pr-4 pt-1 pb-1 text-xl border border-blue-500 rounded bg-blue-500 text-white font-bold" type="submit">
                     {currentTask ? 'Actualizar' : 'Crear'}
                 </button>
                 {currentTask && (
-                    <button
-                        className="ml-5 pl-4 pr-4 mb-5 text-xl rounded bg-red-500 text-white font-bold"
-                        type="button"
-                        onClick={resetForm} // Llama a resetForm para volver al modo "Crear tarea"
-                    >
+                    <button className="ml-5 pl-4 pr-4 mb-5 text-xl rounded bg-red-500 text-white font-bold" type="button" onClick={clearCurrentTask}>
                         Cancelar
                     </button>
                 )}
